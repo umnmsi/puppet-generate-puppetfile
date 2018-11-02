@@ -11,6 +11,7 @@ module GeneratePuppetfile
       options = {}
       # Default values
       options[:modulename] = 'profile'
+      options[:filter] = []
 
       opts = OptionParser.new do |opts|
         opts.banner = 'generate-puppetfile [OPTIONS] [<MODULE> ... <MODULE>]'
@@ -38,6 +39,10 @@ module GeneratePuppetfile
 
         opts.on('-l', '--latest-versions', "Use latest version of forge modules and default branch of repository modules in .fixtures.yml") do |name|
           options[:latest_versions] = true
+        end
+
+        opts.on('-f', '--filter DIR', "Skip checking DIR for .fixtures.yml modules") do |dir|
+          options[:filter] << dir
         end
 
         opts.on('-s', '--silent', 'Run in silent mode. Supresses all non-debug output. Adds the -c flag automatically.') do

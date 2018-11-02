@@ -434,6 +434,8 @@ forge 'https://forge.puppet.com'
 
         paths = modulepath.split(':').delete_if { |path| path =~ /^\$/ }
         paths.each do |path|
+          puts "Checking #{path} against #{@options[:filter]}"
+          next unless @options[:filter].empty? || !@options[:filter].include?(File.basename(path))
           Dir["#{path}/*"].each do |module_location|
             next unless File.directory?(module_location)
             module_name = File.basename(module_location)
