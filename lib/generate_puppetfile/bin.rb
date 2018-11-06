@@ -434,12 +434,14 @@ forge 'https://forge.puppet.com'
 
         paths = modulepath.split(':').delete_if { |path| path =~ /^\$/ }
         paths.each do |path|
-          puts "Checking #{path} against #{@options[:filter]}"
+          puts "Checking #{path} against #{@options[:filter]}" if @options[:debug]
           next unless @options[:filter].empty? || !@options[:filter].include?(File.basename(path))
           Dir["#{path}/*"].each do |module_location|
+            puts "Checking if #{module_location} is a module" if @options[:debug]
             next unless File.directory?(module_location)
             module_name = File.basename(module_location)
             module_path = module_location
+            puts "Adding #{module_location} to symlinks" if @options[:debug]
             symlinks << {
               :name => module_name,
               :path => '"#{source_dir}/' + module_path + '"',
