@@ -450,16 +450,11 @@ forge 'https://forge.puppet.com'
         end
       else
         puts "\nGenerating .fixtures.yml using module name #{@options[:modulename]}." unless @options[:silent]
-
-        symlinks << { 
-          :name => @options[:modulename],
-          :path => '"#{source_dir}"',
-        }
       end
 
       # Header for fixtures file creates symlinks for the controlrepo's modulepath, or for the current module"
       fixtures_data = "fixtures:\n"
-      if symlinks
+      unless symlinks.empty?
         fixtures_data += "  symlinks:\n"
         symlinks.sort_by!{|symlink| symlink[:name]}.each do |symlink|
           fixtures_data += "    #{symlink[:name]}: #{symlink[:path]}\n"
@@ -469,6 +464,7 @@ forge 'https://forge.puppet.com'
       unless @repository_data.empty?
         fixtures_data += "  repositories:\n"
         @repository_data.sort_by!{|repo| repo[:name]}.each do |repodata|
+          next unless @args.empty? || @args.delete(repodata[:name])
           # Each repository has two or  pieces of data
           #   Mandatory: the module name, the URI/location
           #   Optional: the type (ref, branch, commit, etc.) and ID (tag, branch name, commit hash, etc.)
@@ -492,7 +488,8 @@ forge 'https://forge.puppet.com'
         fixtures_data += "  forge_modules:\n"
         @module_data.keys.sort_by!{|mod| mod.split(/[\/-]/)[1]}.each do |modulename|
           shortname = modulename.split(/[\/-]/)[1]
-          version = @module_data[modulename] 
+          next unless @args.empty? || @args.delete(shortname)
+          version = @module_data[modulename]
           data = <<-EOF
     #{shortname}:
       repo: "#{modulename}"
@@ -502,6 +499,8 @@ forge 'https://forge.puppet.com'
           fixtures_data += data
         end
       end
+
+      puts "WARNING: Unknown module(s) #{@args}" unless @args.empty?
 
       fixtures_data
     end
