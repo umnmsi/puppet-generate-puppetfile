@@ -461,10 +461,12 @@ forge 'https://forge.puppet.com'
         end
       end
 
+      include_all_modules = @args.empty?
+
       unless @repository_data.empty?
         fixtures_data += "  repositories:\n"
         @repository_data.sort_by!{|repo| repo[:name]}.each do |repodata|
-          next unless @args.empty? || @args.delete(repodata[:name])
+          next unless include_all_modules || @args.delete(repodata[:name])
           # Each repository has two or  pieces of data
           #   Mandatory: the module name, the URI/location
           #   Optional: the type (ref, branch, commit, etc.) and ID (tag, branch name, commit hash, etc.)
@@ -472,6 +474,10 @@ forge 'https://forge.puppet.com'
           location  = repodata[:location]
           type      = repodata[:type]
           id        = repodata[:id]
+          if @options[:use_refs] && !type.nil? && type.eql?('branch')
+            type = 'ref'
+            id = "origin/#{id}"
+          end
 
           data = <<-EOF
     #{name}:
@@ -488,7 +494,7 @@ forge 'https://forge.puppet.com'
         fixtures_data += "  forge_modules:\n"
         @module_data.keys.sort_by!{|mod| mod.split(/[\/-]/)[1]}.each do |modulename|
           shortname = modulename.split(/[\/-]/)[1]
-          next unless @args.empty? || @args.delete(shortname)
+          next unless include_all_modules || @args.delete(shortname)
           version = @module_data[modulename]
           data = <<-EOF
     #{shortname}:

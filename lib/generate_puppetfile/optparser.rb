@@ -45,6 +45,10 @@ module GeneratePuppetfile
           options[:filter] << dir
         end
 
+        opts.on('-r', '--use-refs', "Convert Puppetfile repo branches to refs") do |dir|
+          options[:use_refs] = true
+        end
+
         opts.on('-s', '--silent', 'Run in silent mode. Supresses all non-debug output. Adds the -c flag automatically.') do
           options[:silent] = true
           options[:create_puppetfile] = true
