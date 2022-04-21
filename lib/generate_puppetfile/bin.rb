@@ -441,7 +441,12 @@ forge 'https://forge.puppet.com'
             next unless File.directory?(module_location)
             module_name = File.basename(module_location)
             module_path = module_location
+            if @options[:modulename] && @options[:modulename].eql?(module_name)
+              puts "Skipping SUT #{module_location}" if @options[:debug]
+              next
+            end
             puts "Adding #{module_location} to symlinks" if @options[:debug]
+            @args.delete(module_name)
             symlinks << {
               :name => module_name,
               :path => '"#{source_dir}/' + module_path + '"',
