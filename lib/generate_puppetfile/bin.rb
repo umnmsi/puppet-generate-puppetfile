@@ -15,7 +15,7 @@ module GeneratePuppetfile
     Repository_Regex    = %r{^\s*mod\s+['"](?:[a-z0-9_]+[-/])?([a-z0-9_]+)['"]\s*,\s*(?:#.*)?$}i
     Location_Only_Regex = %r{^\s+:git\s+=>\s+['"](\S+)['"]\s*(?:#.*)?$}i
     Location_Plus_Regex = %r{^\s+:git\s+=>\s+['"](\S+)['"]\s*,\s*(?:#.*)?$}i
-    Type_ID_Regex       = %r{^\s+:(\w+)\s+=>\s+['"](\S+)['"]\s*(?:#.*)?$}i
+    Type_ID_Regex       = %r{^\s+:(\w+)\s+=>\s+(?:['"](\S+)['"]|(:control_branch)(?:,)?)\s*(?:#.*)?$}i
     Forge_Regex         = %r{^forge}
     Blanks_Regex        = %r{^\s*$}
     Comments_Regex      = %r{^\s*#}
@@ -344,7 +344,18 @@ Your Puppetfile has been generated. Copy and paste between the markers:
                   if Type_ID_Regex.match(line)
                     type = Regexp.last_match(1)
                     id   = Regexp.last_match(2)
+                    cb   = Regexp.last_match(3)
                     puts "Found module #{name} with location #{location}, #{type} of #{id}" if @options[:debug]
+                    if type.eql?('branch') and cb.eql?(':control_branch')
+                      puts "Found branch :control_branch" if @options[:debug]
+                      if @options[:control_branch]
+                        puts "Using control_branch option #{@options[:control_branch]} for #{type}" if @options[:debug]
+                        id = @options[:control_branch]
+                      else
+                        id = `git rev-parse --abbrev-ref HEAD`.strip
+                        puts "Using current branch #{id} for #{type}" if @options[:debug]
+                      end
+                    end
                     unless location.match(URI.regexp)
                       puts "#{location} is not a valid URI, skipping this repo" if @options[:debug]
                       break

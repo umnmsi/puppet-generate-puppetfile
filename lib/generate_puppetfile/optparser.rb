@@ -50,6 +50,10 @@ module GeneratePuppetfile
           options[:use_refs] = true
         end
 
+        opts.on('-C', '--control_branch NAME', "Replace :control_branch with NAME in module definitions.") do |branch|
+          options[:control_branch] = branch
+        end
+
         opts.on('-M', '--modulepath DIR', "Check DIR for .fixtures.yml modules. Can be specified more than once.") do |dir|
           options[:modulepaths] << dir
         end
