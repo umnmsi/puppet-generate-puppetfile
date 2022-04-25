@@ -422,39 +422,39 @@ forge 'https://forge.puppet.com'
 
     # Public: Generate a simple fixtures file.
     def generate_fixtures_data
+      include_all_modules = @args.empty?
+
       # Determine if there are symlinks, either for the default modulename, or for anything in the modulepath
       symlinks = []
-      modulepath = ''
       if (File.exists?('environment.conf') and environment_conf = File.read('environment.conf'))
         puts "\nGenerating .fixtures.yml for a controlrepo." unless @options[:silent]
 
+        modulepath = ''
         environment_conf.split("\n").each do |line|
           modulepath = (line.split('='))[1].gsub(/\s+/,'') if line =~ /^modulepath/
         end
 
-        paths = modulepath.split(':').delete_if { |path| path =~ /^\$/ }
-        paths.each do |path|
-          puts "Checking #{path} against #{@options[:filter]}" if @options[:debug]
-          next unless @options[:filter].empty? || !@options[:filter].include?(File.basename(path))
-          Dir["#{path}/*"].each do |module_location|
-            puts "Checking if #{module_location} is a module" if @options[:debug]
-            next unless File.directory?(module_location)
-            module_name = File.basename(module_location)
-            module_path = module_location
-            if @options[:modulename] && @options[:modulename].eql?(module_name)
-              puts "Skipping SUT #{module_location}" if @options[:debug]
-              next
-            end
-            puts "Adding #{module_location} to symlinks" if @options[:debug]
-            @args.delete(module_name)
-            symlinks << {
-              :name => module_name,
-              :path => '"#{source_dir}/' + module_path + '"',
-            }
-          end
-        end
+        @options[:modulepaths].concat(modulepath.split(':').delete_if { |path| path =~ /^\$/ })
       else
         puts "\nGenerating .fixtures.yml using module name #{@options[:modulename]}." unless @options[:silent]
+      end
+
+      @options[:modulepaths].uniq.each do |path|
+        puts "Checking #{path} against #{@options[:filter]}" if @options[:debug]
+        next unless @options[:filter].empty? || !@options[:filter].include?(File.basename(path))
+        Dir["#{path}/*"].each do |module_location|
+          puts "Checking if #{module_location} is a module" if @options[:debug]
+          next unless File.directory?(module_location)
+          module_name = File.basename(module_location)
+          module_path = module_location
+          next unless include_all_modules || @args.delete(module_name)
+          puts "Adding #{module_location} to symlinks" if @options[:debug]
+          @args.delete(module_name)
+          symlinks << {
+            :name => module_name,
+            :path => '"#{source_dir}/' + module_path + '"',
+          }
+        end
       end
 
       # Header for fixtures file creates symlinks for the controlrepo's modulepath, or for the current module"
@@ -465,8 +465,6 @@ forge 'https://forge.puppet.com'
           fixtures_data += "    #{symlink[:name]}: #{symlink[:path]}\n"
         end
       end
-
-      include_all_modules = @args.empty?
 
       unless @repository_data.empty?
         fixtures_data += "  repositories:\n"
